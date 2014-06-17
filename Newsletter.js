@@ -1,7 +1,7 @@
 //     Newsletter.js - (c) 2014 Adam Carruthers
 //     Newsletter may be freely distributed under the MIT License.
 
-(function () {
+(function (global) {
     'use strict';
 
     var Newsletter = {
@@ -87,17 +87,18 @@
         }
     };
 
-    // Export Newsletter for Node.
-    if (typeof module !== 'undefined') {
-        module.exports = Newsletter;
-    }
-
-    // Export Newsletter for AMD/CommonJS modules.
     if (typeof define === 'function' && define.amd) {
+        // Export Newsletter for Node.
         define('newsletter', [], function () {
             return Newsletter;
         });
+    } else if (typeof module !== 'undefined') {
+        // Export Newsletter for AMD/CommonJS modules.
+        module.exports = Newsletter;
+    } else {
+        // Define Newsletter as a global.
+        global.Newsletter = Newsletter;
     }
 
     return Newsletter;
-}());
+}(this));
