@@ -33,7 +33,7 @@ Newsletter may be freely distributed under the MIT License.
             </div>
             
             <div class="content"><div class='highlight'><pre>
-(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
+(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(global)</span> {</span>
 <span class="hljs-pi">    'use strict'</span>;
 
     <span class="hljs-keyword">var</span> Newsletter = {</pre></div></div>
@@ -152,7 +152,9 @@ if it doesn’t already exist.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">this</span>.channels[chan] = (<span class="hljs-keyword">this</span>.channels[chan] || []);
-            <span class="hljs-keyword">this</span>.channels[chan].push(cb);
+
+            <span class="hljs-keyword">var</span> len = <span class="hljs-keyword">this</span>.channels[chan].length;
+            <span class="hljs-keyword">this</span>.channels[chan][len] = cb;
 
             <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
         },</pre></div></div>
@@ -210,7 +212,7 @@ if it doesn’t already exist.</p>
             
             <div class="content"><div class='highlight'><pre>        pub: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(chan, msg, cb)</span> {</span>
             <span class="hljs-keyword">var</span> subs = <span class="hljs-keyword">this</span>.channels[chan],
-                index;</pre></div></div>
+                index, len;</pre></div></div>
             
         </li>
         
@@ -229,7 +231,8 @@ if it doesn’t already exist.</p>
                 <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
             }
 
-            <span class="hljs-keyword">for</span> (index = <span class="hljs-number">0</span>; index &lt; subs.length; index++) {</pre></div></div>
+            len = subs.length;
+            <span class="hljs-keyword">for</span> (index = <span class="hljs-number">0</span>; index &lt; len; index++) {</pre></div></div>
             
         </li>
         
@@ -304,7 +307,8 @@ Otherwise, the operation was successful, so return <code>true</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        unsub: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(chan, cb)</span> {</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>        unsub: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(chan, cb)</span> {</span>
+            <span class="hljs-keyword">var</span> channel = <span class="hljs-keyword">this</span>.channels[chan];</pre></div></div>
             
         </li>
         
@@ -319,7 +323,7 @@ Otherwise, the operation was successful, so return <code>true</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.channels[chan] === <span class="hljs-string">'undefined'</span>) {
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (channel === <span class="hljs-string">'undefined'</span>) {
                 <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
             }</pre></div></div>
             
@@ -338,7 +342,7 @@ specified.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (cb) {
-                <span class="hljs-keyword">var</span> trashIndex = <span class="hljs-keyword">this</span>.channels[chan].indexOf(cb);</pre></div></div>
+                <span class="hljs-keyword">var</span> trashIndex = channel.indexOf(cb);</pre></div></div>
             
         </li>
         
@@ -349,16 +353,10 @@ specified.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
-              <p>If the callback isn’t subscribed to this channel, we didn’t do
-anything, so return <code>false</code>. Otherwise return the result of
-deleting the callback from the channel.</p>
+              <p>It’s worth pointing out that the <code>~</code> operator will only return
+<code>false</code> when the value it operates on is <code>-1</code>.</p>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">return</span> (~trashIndex)
-                    ? <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.channels[chan][trashIndex]
-                    : <span class="hljs-literal">false</span>;
-            }</pre></div></div>
             
         </li>
         
@@ -369,14 +367,12 @@ deleting the callback from the channel.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
-              <p>Otherwise, remove all of the subscribers to this channel i.e.
-removing the channel itself.</p>
+              <p>For more on the <code>~</code> operator:
+<a href="http://www.joezimjs.com/javascript/great-mystery-of-the-tilde/">http://www.joezimjs.com/javascript/great-mystery-of-the-tilde/</a></p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> (<span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.channels[chan]);
-        }
-    };</pre></div></div>
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">if</span> (~trashIndex) {</pre></div></div>
             
         </li>
         
@@ -387,13 +383,21 @@ removing the channel itself.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
-              <p>Export Newsletter for Node.</p>
+              <p>Remove the callback from the channel if it exists.
+Because order doesn’t matter, use some simple logic that’s
+faster than splice.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> module !== <span class="hljs-string">'undefined'</span>) {
-        module.exports = Newsletter;
-    }</pre></div></div>
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">var</span> last = channel.length - <span class="hljs-number">1</span>;
+                    channel[trashIndex] = channel[last];
+                    channel[last] = <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>;
+                    channel.length = last;
+                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+                }
+                
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+            }</pre></div></div>
             
         </li>
         
@@ -404,18 +408,70 @@ removing the channel itself.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
+              <p>Otherwise, remove all of the subscribers to this channel i.e.
+removing the channel itself.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">this</span>.channels[chan] = <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>;
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+        }
+    };
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>Export Newsletter for Node.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        define(<span class="hljs-string">'newsletter'</span>, [], <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
+            <span class="hljs-keyword">return</span> Newsletter;
+        });
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> module !== <span class="hljs-string">'undefined'</span>) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
               <p>Export Newsletter for AMD/CommonJS modules.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {
-        define(<span class="hljs-string">'newsletter'</span>, [], <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
-            <span class="hljs-keyword">return</span> Newsletter;
-        });
+            <div class="content"><div class='highlight'><pre>        module.exports = Newsletter;
+    } <span class="hljs-keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>Define Newsletter as a global.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        global.Newsletter = Newsletter;
     }
 
     <span class="hljs-keyword">return</span> Newsletter;
-}());</pre></div></div>
+}(<span class="hljs-keyword">this</span>));</pre></div></div>
             
         </li>
         
