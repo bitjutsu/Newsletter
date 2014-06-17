@@ -26,7 +26,9 @@
             // Append the new callback to the channel, creating the channel
             // if it doesn't already exist.
             this.channels[chan] = (this.channels[chan] || []);
-            this.channels[chan].push(cb);
+
+            var len = this.channels[chan].length;
+            this.channels[chan][len] = cb;
 
             return true;
         },
@@ -39,14 +41,15 @@
         // Maybe.
         pub: function (chan, msg, cb) {
             var subs = this.channels[chan],
-                index;
+                index, len;
 
             // If there are no subscribers, there is no one to notify.
             if (!subs) {
                 return false;
             }
 
-            for (index = 0; index < subs.length; index++) {
+            len = subs.length;
+            for (index = 0; index < len; index++) {
                 // Call the subscriber if it's a function and not an imposter.
                 if (typeof subs[index] === 'function') {
                     subs[index](msg, chan);
@@ -63,27 +66,41 @@
 
         // Remove a callback (or all callbacks) from the specified channel.
         unsub: function (chan, cb) {
+            var channel = this.channels[chan];
+
             // If the channel specified doesn't exist, there's nothing to do.
-            if (this.channels[chan] === 'undefined') {
+            if (channel === 'undefined') {
                 return false;
             }
 
             // If the cb parameter was passed, remove just the callback
             // specified.
             if (cb) {
-                var trashIndex = this.channels[chan].indexOf(cb);
+                var trashIndex = channel.indexOf(cb);
 
-                // If the callback isn't subscribed to this channel, we didn't do
-                // anything, so return `false`. Otherwise return the result of
-                // deleting the callback from the channel.
-                return (~trashIndex)
-                    ? delete this.channels[chan][trashIndex]
-                    : false;
+                // It's worth pointing out that the `~` operator will only return
+                // `false` when the value it operates on is `-1`.
+
+                // For more on the `~` operator:
+                // http://www.joezimjs.com/javascript/great-mystery-of-the-tilde/
+                if (~trashIndex) {
+                    // Remove the callback from the channel if it exists.
+                    // Because order doesn't matter, use some simple logic that's
+                    // faster than splice.
+                    var last = channel.length - 1;
+                    channel[trashIndex] = channel[last];
+                    channel[last] = void 0;
+                    channel.length = last;
+                    return true;
+                }
+                
+                return false;
             }
 
             // Otherwise, remove all of the subscribers to this channel i.e.
             // removing the channel itself.
-            return (delete this.channels[chan]);
+            this.channels[chan] = void 0;
+            return true;
         }
     };
 
