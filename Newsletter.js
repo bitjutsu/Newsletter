@@ -69,7 +69,7 @@
             var channel = this.channels[chan];
 
             // If the channel specified doesn't exist, there's nothing to do.
-            if (channel === 'undefined') {
+            if (typeof channel === 'undefined') {
                 return false;
             }
 
