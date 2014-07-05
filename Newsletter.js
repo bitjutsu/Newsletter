@@ -84,6 +84,12 @@
                 // For more on the `~` operator:
                 // http://www.joezimjs.com/javascript/great-mystery-of-the-tilde/
                 if (~trashIndex) {
+                    // There will be no callbacks left on this channel, might as
+                    // well remove it.
+                    if (channel.length == 1) {
+                        delete this.channels[chan];
+                    }
+
                     // Remove the callback from the channel if it exists.
                     // Because order doesn't matter, use some simple logic that's
                     // faster than splice.
@@ -91,6 +97,7 @@
                     channel[trashIndex] = channel[last];
                     channel[last] = void 0;
                     channel.length = last;
+
                     return true;
                 }
                 
@@ -99,7 +106,7 @@
 
             // Otherwise, remove all of the subscribers to this channel i.e.
             // removing the channel itself.
-            this.channels[chan] = void 0;
+            delete this.channels[chan];
             return true;
         }
     };
