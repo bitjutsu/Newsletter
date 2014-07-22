@@ -17,18 +17,30 @@
         // Sub takes a channel (usually a string) and a callback, and subscribes
         // the callback to that channel returning `true` if successful and
         // `false` otherwise.
-        sub: function (chan, cb) {
+        sub: function (chans, cb) {
             // Not on my watch.
             if (typeof cb !== 'function') {
                 return false;
             }
 
-            // Append the new callback to the channel, creating the channel
-            // if it doesn't already exist.
-            this.channels[chan] = (this.channels[chan] || []);
+            /* Convert chans to an array to keep the logic simple. */
+            if (!Array.isArray(chans)) {
+                chans = [ chans ];
+            }
 
-            var len = this.channels[chan].length;
-            this.channels[chan][len] = cb;
+            var length = chans.length,
+                index = -1;
+
+            while (++index < length) {
+                var chan = chans[index];
+
+                // Append the new callback to the channel, creating the channel
+                // if it doesn't already exist.
+                this.channels[chan] = (this.channels[chan] || []);
+
+                var len = this.channels[chan].length;
+                this.channels[chan][len] = cb;
+            }
 
             return true;
         },
